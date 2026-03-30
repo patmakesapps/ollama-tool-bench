@@ -16,27 +16,45 @@ from registry import call_tool, get_schemas, list_tools
 
 MODEL = "llama3.2:3b"
 
-SYSTEM_PROMPT = (
-    "You are Lumi, a helpful assistant. "
-    "Use your tools when the user's question genuinely requires it. "
-    "Do not call tools during casual conversation. "
-    "When the user gives you a specific URL to fetch, always use the http_get tool — never use web_search or run_command for this. "
-    "After calling web_search, write a concise summary of the findings and list each source as a numbered reference with its URL. "
-    "For all other tools, answer directly using the result — no fake sources or URLs."
-)
+SYSTEM_PROMPT = """You are Lumi, a helpful assistant with access to tools.
+
+IMPORTANT RULES — follow these exactly:
+- If the user asks for the current time or date, you MUST call get_time.
+- If the user asks to search the web or needs current news/info, you MUST call web_search.
+- If the user gives a specific URL to fetch, you MUST call http_get. Never use run_command or web_search for this.
+- If the user asks a math question or calculation, you MUST call calculate.
+- If the user asks to read/view/show a file, you MUST call read_file.
+- If the user asks to list files or explore a directory, you MUST call list_files.
+- If the user asks to search inside files or a codebase, you MUST call search_content.
+- If the user asks to create or write a file, you MUST call write_file.
+- If the user asks to edit/change/modify a file, you MUST call edit_file.
+- If the user asks to delete/remove a file, you MUST call delete_file.
+- If the user asks to run a terminal/shell command, you MUST call run_command.
+- If the user asks what is on their clipboard, you MUST call get_clipboard.
+- If the user asks to copy text to their clipboard, you MUST call set_clipboard.
+- If the user says remember/save/note/don't forget something, you MUST call save_note.
+- If the user asks what you remember or for your notes, you MUST call get_note.
+- For greetings, casual chat, opinions, or general knowledge, call no_action with your response.
+
+RESPONSE RULES:
+- After web_search, summarize findings and list each source with its URL.
+- For all other tools, answer directly using the result. Do not invent fake URLs or sources.
+- Never guess the time, date, or math results — always use the tool.
+"""
 
 
 def run_agent(user_prompt: str, verbose: bool = True) -> str:
     """
-    Agentic loop using Ollama's native tool-calling API.
-    The model returns structured tool_calls; no text parsing needed.
+    Agentic loop with a no_action escape hatch.
+    Tools are always available, including a 'no_action' tool the model picks
+    when it can answer on its own — preventing it from misusing real tools.
     """
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt},
     ]
 
-    max_iterations = 10
+    max_iterations = 5
 
     for _ in range(max_iterations):
         response = ollama.chat(
@@ -51,8 +69,15 @@ def run_agent(user_prompt: str, verbose: bool = True) -> str:
         tool_calls = msg.get("tool_calls") or []
 
         if not tool_calls:
-            # No tool call — this is the final answer
             content = msg.get("content", "").strip()
+            if verbose:
+                print(f"\n[assistant] {content}\n")
+            return content
+
+        # Check for no_action — model is answering directly
+        first_call = tool_calls[0]
+        if first_call["function"]["name"] == "no_action":
+            content = first_call["function"].get("arguments", {}).get("message", "")
             if verbose:
                 print(f"\n[assistant] {content}\n")
             return content

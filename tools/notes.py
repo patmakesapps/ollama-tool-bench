@@ -23,9 +23,9 @@ def _save(data: dict) -> None:
 @tool(
     name="save_note",
     description=(
-        "Saves a note under a key so it can be retrieved later. "
-        "Use this to remember facts, preferences, or context the user wants you to keep. "
-        "Notes persist across conversations."
+        "WRITE tool: saves a new note to persistent storage. "
+        "Use this whenever the user says 'remember', 'save', 'note that', or 'don't forget'. "
+        "Requires both a key and a value. Notes persist across conversations."
     ),
     parameters={
         "key": {
@@ -48,9 +48,9 @@ def save_note(key: str, value: str) -> str:
 @tool(
     name="get_note",
     description=(
-        "Retrieves a previously saved note by key. "
-        "Use this when the user references something you may have remembered before, "
-        "or to check if a fact was already stored."
+        "READ tool: retrieves a previously saved note from persistent storage. "
+        "Use this when the user asks what you remember, or references something saved before. "
+        "Do NOT use this to save new information — use save_note for that."
     ),
     parameters={
         "key": {

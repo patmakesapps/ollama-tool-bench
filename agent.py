@@ -20,9 +20,9 @@ SYSTEM_PROMPT = (
     "You are Lumi, a helpful assistant. "
     "Use your tools when the user's question genuinely requires it. "
     "Do not call tools during casual conversation. "
-    "After calling web_search specifically, write a concise summary of the findings, "
-    "then list each source as a numbered reference with its URL. "
-    "For all other tools, just answer directly using the result — no fake sources or URLs."
+    "When the user gives you a specific URL to fetch, always use the http_get tool — never use web_search or run_command for this. "
+    "After calling web_search, write a concise summary of the findings and list each source as a numbered reference with its URL. "
+    "For all other tools, answer directly using the result — no fake sources or URLs."
 )
 
 
@@ -81,8 +81,10 @@ def run_agent(user_prompt: str, verbose: bool = True) -> str:
             messages=messages + [{
                 "role": "user",
                 "content": (
-                    f"Tool results:\n{results_block}\n\n"
-                    f"Answer concisely: {user_prompt}"
+                    f"The tools returned:\n{results_block}\n\n"
+                    f"Reply to the user using ONLY the information above. "
+                    f"Do not say you have no information. Do not make anything up. "
+                    f"User asked: {user_prompt}"
                 ),
             }],
             tools=[],  # No tools — must produce text
@@ -97,8 +99,8 @@ def run_agent(user_prompt: str, verbose: bool = True) -> str:
 
 def chat_loop():
     """Interactive multi-turn chat loop."""
-    print(f"\n Agent ready. Model: {MODEL}")
-    list_tools()
+    tool_count = len(get_schemas())
+    print(f"\n Agent ready. Model: {MODEL} | {tool_count} tools loaded")
     print("Type your message and press Enter. Ctrl+C to quit.\n")
 
     while True:

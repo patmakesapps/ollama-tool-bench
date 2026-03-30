@@ -21,7 +21,11 @@ import re
         },
         "file_pattern": {
             "type": "string",
-            "description": "Glob pattern to limit which files are searched, e.g. '*.py'. Defaults to all files.",
+            "description": (
+                "Glob pattern to filter files. "
+                "ALWAYS default to '**/*' unless the user specifies a file type. "
+                "Use '**/*.py' only if the user says 'python files', '**/*.js' for JavaScript, etc."
+            ),
         },
     },
 )
@@ -35,9 +39,15 @@ def search_content(directory: str, query: str, file_pattern: str = "**/*") -> st
     except re.error as e:
         return f"[Error] Invalid regex pattern: {e}"
 
+    EXCLUDE = {"__pycache__", ".git", "node_modules", ".venv", "venv"}
+
     matches = []
     for filepath in sorted(base.glob(file_pattern)):
         if not filepath.is_file():
+            continue
+        if any(part in EXCLUDE for part in filepath.parts):
+            continue
+        if filepath.suffix in {".pyc", ".pyo", ".exe", ".dll", ".so", ".bin"}:
             continue
         try:
             lines = filepath.read_text(encoding="utf-8", errors="ignore").splitlines()

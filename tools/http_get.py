@@ -6,8 +6,9 @@ import requests
 @tool(
     name="http_get",
     description=(
-        "Fetches the response body from a URL via HTTP GET. "
-        "Use this to call APIs, fetch raw JSON, or retrieve web content directly by URL. "
+        "A built-in tool that fetches the response body from a URL via HTTP GET. "
+        "Call this tool directly — do NOT use run_command to fetch URLs. "
+        "Use this when the user provides a specific URL to fetch or an API endpoint to call. "
         "Prefer web_search when you don't have a specific URL."
     ),
     parameters={

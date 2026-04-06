@@ -1,6 +1,9 @@
 # ollama-tool-bench
 
 A lightweight agentic framework for testing how well local Ollama models handle tool calling. Run it against any model before you build your project — find out fast which ones actually follow tool schemas, which ones hallucinate, and which ones fall apart.
+---
+
+https://github.com/patmakesapps/LumaKit is the newer and better version of this repo redesigned with cleaner architecture and meant for long term projects.
 
 ---
 
